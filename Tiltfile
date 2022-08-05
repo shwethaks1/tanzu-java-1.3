@@ -3,7 +3,6 @@ LOCAL_PATH = os.getenv("LOCAL_PATH", default='.')
 NAMESPACE = os.getenv("NAMESPACE", default='default')
 OUTPUT_TO_NULL_COMMAND = os.getenv("OUTPUT_TO_NULL_COMMAND", default=' > /dev/null ')
 
-
 k8s_custom_deploy(
     'tanzu-java-web-app',
     apply_cmd="tanzu apps workload apply -f config/workload.yaml --debug --live-update" +
