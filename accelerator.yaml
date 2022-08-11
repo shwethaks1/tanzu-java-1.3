@@ -9,37 +9,66 @@ accelerator:
   - tanzu
 
   options:
-  - name: repositoryPrefix
-    inputType: text
-    label: Prefix for the container image repository
-    defaultValue: dev.local
-    required: true
+  # - name: repositoryPrefix
+  #   inputType: text
+  #   label: Prefix for the container image repository
+  #   defaultValue: dev.local
+  #   required: true
+  - name: instances
+    label: Minimum number of instances to start
+    inputType: select
+    display: true
+    defaultValue: "1"
+    choices:
+      - text: "no instaces"
+        value: "0"
+      - text: "1 instance"
+        value: "1"
+      - text: "2 instances"
+        value: "2"
+
+  imports:
+  - name: java-version
 
 engine:
-  merge:
-  - include: [ "**/*" ]
-    exclude: [ "config/*.yaml", "Tiltfile", "README.md", "grype.yaml", "catalog/*.yaml", ".github/workflows/**" ]
-  - include: [ "config/*.yaml", "Tiltfile" ]
-    chain:
-    - type: ReplaceText
-      substitutions:
-      - text: tanzu-java-web-app
-        with: "#artifactId"
-    - type: ReplaceText
-      substitutions:
-      - text: your-registry.io/project
-        with: "#repositoryPrefix"
-  - include: [ "README.md" ]
-    chain:
-    - type: ReplaceText
-      substitutions:
-      - text: tanzu-java-web-app
-        with: "#artifactId"
-  - include: [ "catalog/*.yaml" ]
-    chain:
-    - type: ReplaceText
-      substitutions:
-      - text: tanzu-java-web-app
-        with: "#artifactId"
-    - type: RewritePath
-      rewriteTo: "#filename"
+  chain:
+  - merge:
+    - include: [ "**/*" ]
+      exclude: [ "config/*.yaml", "Tiltfile", "README.md", "grype.yaml", "catalog/*.yaml", ".github/workflows/**", "pom.xml" ]
+    - include: [ "config/*.yaml", "Tiltfile" ]
+      let:
+      - name: repositoryPrefix
+        expression: "'dev.local'"
+      chain:
+      - type: ReplaceText
+        substitutions:
+        - text: tanzu-java-web-app
+          with: "#artifactId"
+      - type: ReplaceText
+        substitutions:
+        - text: your-registry.io/project
+          with: "#repositoryPrefix"
+    - include: [ "README.md" ]
+      chain:
+      - type: ReplaceText
+        substitutions:
+        - text: tanzu-java-web-app
+          with: "#artifactId"
+    - include: [ "config/workload.yaml" ]
+      chain:
+      - type: ReplaceText
+        substitutions:
+        - text: "<INSTANCES>"
+          with: "#instances"
+    - include: [ "catalog/*.yaml" ]
+      chain:
+      - type: ReplaceText
+        substitutions:
+        - text: tanzu-java-web-app
+          with: "#artifactId"
+      - type: RewritePath
+        rewriteTo: "#filename"
+  - merge:
+    - include: [ "**" ]
+    - type: InvokeFragment
+      reference: java-version
