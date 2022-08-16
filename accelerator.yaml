@@ -20,12 +20,28 @@ accelerator:
     display: true
     defaultValue: "1"
     choices:
-      - text: "no instaces"
+      - text: "Scale To 0"
         value: "0"
       - text: "1 instance"
         value: "1"
       - text: "2 instances"
         value: "2"
+  - label: Create Custom Logging Pattern
+    description: "If selected, you can override the default logging pattern with you own custom pattern."
+    defaultValue: false
+    name: createCustomLoggingPattern
+    inputType: checkbox
+    dataType: boolean
+    required: true
+  - label: Console Logging Pattern
+    description:  Pattern used to create log messages to the configured console.
+    defaultValue: "%clr(%d{${LOG_DATEFORMAT_PATTERN}}) ${PID: } %clr(${LOG_LEVEL_PATTERN:%5p}) %clr(---) %clr([%15.15t]) %clr(%-40.40logger{39}) %clr(:) %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}}"
+    name: consoleLoggingPattern
+    inputType: text
+    dataType: string
+    required: true 
+    dependsOn: 
+      name: createCustomLoggingPattern
 
   imports:
   - name: java-version
@@ -34,7 +50,7 @@ engine:
   chain:
   - merge:
     - include: [ "**/*" ]
-      exclude: [ "config/*.yaml", "Tiltfile", "README.md", "grype.yaml", "catalog/*.yaml", ".github/workflows/**", "pom.xml" ]
+      exclude: [ "config/*.yaml", "Tiltfile", "README.md", "grype.yaml", "catalog/*.yaml", ".github/workflows/**" ]
     - include: [ "config/*.yaml", "Tiltfile" ]
       let:
       - name: repositoryPrefix
@@ -68,6 +84,12 @@ engine:
           with: "#artifactId"
       - type: RewritePath
         rewriteTo: "#filename"
+    - include: [ "src/main/resources/application.yml" ]
+      chain:
+      - type: ReplaceText
+        substitutions:
+        - text: <CONSOLE_LOGGING_PATTERN>
+          with: "#consoleLoggingPattern"
   - merge:
     - include: [ "**" ]
     - type: InvokeFragment
